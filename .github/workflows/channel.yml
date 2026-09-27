@@ -1,0 +1,36 @@
+name: channel-price
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'   # هر ۱۰ دقیقه
+  workflow_dispatch: {}       # امکان اجرای دستی از تب Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: channel-price
+  cancel-in-progress: false
+
+jobs:
+  check-price:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install requests
+
+      - run: python channel_check.py
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          BOT_USERNAME: ${{ secrets.BOT_USERNAME }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "بروزرسانی وضعیت قیمت"
+          file_pattern: state.json
